@@ -1,0 +1,36 @@
+
+function saveManifest(){
+    var params = {
+        "apsdb.name": "deviceModelsEditor/api/manifest.json",
+        "apsdb.content": JSON.stringify({
+            "content":request.parameters.content,
+            "contentType": "text/plain",
+            "ACL" : {"execute":"anonymous" , "read":"anonymous", "write":"anonymous" }
+        }),
+        "apsdb.update":true
+    }
+    return apsdb.callApi("SaveFile", params, null);
+}
+
+if(request.parameters.classParams){
+    var resp;
+    var file = require('./manager/file');
+    var classParams = JSON.parse(request.parameters.classParams);
+    if(classParams['method']  == 'delete'){
+        resp = file.remove(classParams);
+    }else{
+        resp = file.create(classParams);
+    }
+
+    if(resp.metadata.status == "success" || resp.metadata.errorCode == "FILE_NOT_FOUND"){
+        return saveManifest();
+    }else{
+        return resp;
+    }
+
+}else{
+    return saveManifest();
+}
+
+
+
