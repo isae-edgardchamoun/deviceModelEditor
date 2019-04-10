@@ -1,5 +1,5 @@
-
 function saveManifest(){
+	//Updating the mainfest.json file 
     var params = {
         "apsdb.name": "deviceModelsEditor/api/manifest.json",
         "apsdb.content": JSON.stringify({
@@ -9,7 +9,22 @@ function saveManifest(){
         }),
         "apsdb.update":true
     }
-    return apsdb.callApi("SaveFile", params, null);
+    var resp = apsdb.callApi("SaveFile", params, null);
+    //Checking if result was success on update
+    if(resp.metadata.errorCode == "FILE_NOT_FOUND"){
+        //Recalling save manifest.json file if file was not found (creating the file for the first time)
+        var params = {
+	        "apsdb.name": "deviceModelsEditor/api/manifest.json",
+	        "apsdb.content": JSON.stringify({
+	            "content":request.parameters.content,
+	            "contentType": "text/plain",
+            	"ACL" : {"execute":"anonymous" , "read":"anonymous", "write":"anonymous" }
+        	})
+    	}
+    	return apsdb.callApi("SaveFile", params, null);
+    }else{
+        return resp;
+    }
 }
 
 if(request.parameters.classParams){
