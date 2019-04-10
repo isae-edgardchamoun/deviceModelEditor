@@ -29,7 +29,7 @@ function saveManifest(){
 
 if(request.parameters.classParams){
     var resp;
-    var file = require('./manager/file');
+    var file = require('u/deviceModelEditor/api/manager/file');
     var classParams = JSON.parse(request.parameters.classParams);
     if(classParams['method']  == 'delete'){
         resp = file.remove(classParams);

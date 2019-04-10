@@ -31,7 +31,7 @@ function create(){
         "newName" : newName,
         "oldName" : oldName
     }; 
-    var file = require('./manager/file');
+    var file = require('u/deviceModelEditor/api/manager/file');
     return file.create(params);
 }
 

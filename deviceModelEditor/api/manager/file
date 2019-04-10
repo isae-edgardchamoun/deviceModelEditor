@@ -1,6 +1,6 @@
-var hogan = require("../../mustache/mustache.js").Mustache;
+var hogan = require("u/deviceModelEditor/mustache/mustache.js").Mustache;
 var file =  require("file");
-var templateString = file.get("../../MoustacheTemplate.html").result.content;
+var templateString = file.get("u/deviceModelEditor/MoustacheTemplate.html").result.content;
 var scriptContentType =  "application/vnd.scriptr-javascript";
 function getClassNameFromPath(path){
     return path.split('.').pop();
@@ -29,7 +29,7 @@ function remove(params){
 }
 
 function getFilePath(classPath, output){
-    var output =  output ? output : "/";
+    var output =  output ? output : "demoApp/";
     var path= classPath.replace(/\./g,'/');
     return output + path;
 }
