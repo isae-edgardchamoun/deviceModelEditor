@@ -1,0 +1,132 @@
+/**
+ * This API is used by the dashboard builder in order to dynamically retrieve the data that pertains to a property of given device
+ * in order to display it in some chart. It is possible to retrive the latest value of a given field or historical data (data series) 
+ * of the given field, if available. The current implementation uses agnes.VersionableDeviceRepositoryAdaptor to load historical
+ * data. which means data has been persisted into scriptr.io's storage. You can replace the adapter with you own implementation.
+ * The method returns data and also publishes it on the dedicated channel ("responseChannel" by default) to which widgets in the 
+ * dashboard are automatically subscribed.
+ * @param {String} id: the identifier of the device to load
+ * @param {String} field: specifies what property of the device we need to read data from
+ * @param {String} method: optional, only needed when requesting data series. 
+ * If defined, "method" specifies what method of the device's class should be invoked to obtain the data series. You can use "query"
+ * which is a built-in method of the Device class.
+ * @retun {Object} value if no method specified or [{time:ios_string_date, field_name: value}, ...] othewise 
+ */ 
+
+var config =  require("u/deviceModelEditor/devicemodels/config");
+var DEFAULT_CHANNEL = "responseChannel";
+
+try {
+ 
+  require("m/framr/Framr").init(this, {classPath: "u/deviceModelEditor/;u/deviceModelEditor/devicemodels/demoApp/;"});
+  import("devicemodels.DeviceFactory");
+  import("agnes.VersionableDeviceRepositoryAdaptor");
+
+  //check search criteria
+  var params = {};
+  if(request.body != null){
+    params = request.body;
+  }else if(request.parameters.body){
+    params = request.parameters.body;
+  }else {
+    params = request.parameters;
+  }
+  
+  if(typeof params == 'string' && params != null){
+    try{
+      params = JSON.parse(params);   
+    }catch(e){
+      return "INVALID OR MISSING PARAMETER";
+    }
+  }
+
+  var id = params.id;
+  if (!id){
+    return "MISSING 'id' PARAMETER";;
+  }
+
+  var field = params.field;
+  if (!field){
+    return "MISSING 'field' PARAMETER";;
+  }
+  
+  var method = params.method;
+  
+  /*
+   * load device from id
+   */
+  var adaptor = new VersionableDeviceRepositoryAdaptor();
+  var deviceFactory = new devicemodels.DeviceFactory({adaptor: adaptor});
+  var device = deviceFactory.load(id); 
+  
+  /*
+   * if no method specified, this is a simple get
+   */
+  if (!method) {
+
+    var deviceData = device.metadata;
+    var output = {};
+    output[field] = deviceData[field];
+    var dev = {
+      id: deviceData.id,
+      cls: deviceData.cls      
+    }
+    
+    dev[field] = deviceData[field];
+    publishUpdate(dev);
+    return output[field];
+  }
+  
+  /*
+   * if field + method, searching for data series
+   */
+  var deviceDataSeries = device[method](field);
+  var dataSeries = [];
+  var dev = {
+    id: id
+  };
+
+  for (var i = 0; deviceDataSeries && i < deviceDataSeries.length; i++) {
+
+    var deviceData = deviceDataSeries[i]; 
+    var output = {};
+    output["time"] = deviceData.lastModifiedDate;
+    output[field] = deviceData[field];
+    dataSeries.push(output);        
+  }
+
+  dev[field] = dataSeries; 
+  publishUpdate(dev, "Historical");
+  return dataSeries;
+ 
+}catch(exception){
+  
+  var log = require("log"); 
+  log.setLevel("info");
+  log.error("Exception occured while invoking devicemodels/api/getDeviceData:\n" + JSON.stringify(exception));
+  return {};
+}
+
+function publishUpdate(device, postfix) {
+  
+  /**
+   * message = {id: deviceid.field, result: }
+   * gauge, speedo, odo: result = value
+   * charts (line, bar, ): result = [y, x, x]
+   */
+  
+  var channel = config && config.channel ? config.channel : DEFAULT_UPDATE_CHANNEL;
+  // var model = modelModule[device.cls];
+  for (var key in device) {
+    
+    // var widgetObj = model ? model.attributes[key] : null;
+    // var widgetType = widgetObj ? widgetObj.type : null;    
+    if (["cls", "id", "vin", "make", "model", "year"].indexOf(key) < 0) {
+      
+      var msg = {};
+      msg["id"] = ""+ device.id + "." + key + (postfix ? postfix : "");
+      msg["result"] = device[key]; 
+      publish(channel, JSON.stringify(msg));
+    }    
+  }  
+}

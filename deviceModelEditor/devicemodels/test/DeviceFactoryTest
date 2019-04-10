@@ -1,0 +1,30 @@
+require("m/framr/Framr").init(this, {classPath: "u/deviceModelEditor/", quiet: true})
+
+import("devicemodels.DeviceFactory")
+import("devicemodels.Device")
+import("agnes.DeviceRepositoryAdaptor")
+
+
+var deviceFactory = new devicemodels.DeviceFactory({adaptor: new agnes.DeviceRepositoryAdaptor()})
+
+var device = deviceFactory.new(devicemodels.Device, {
+  model: {
+    id:"vwBeatle", 
+    name:"VW beatle",
+    seats: 4
+  }
+})
+
+device.set("abc", 4)
+
+device.save()
+
+device = deviceFactory.load("vwBeatle")
+
+logger.log("device loaded", device.serialize())
+
+device.delete()
+
+logger.log("works")
+
+

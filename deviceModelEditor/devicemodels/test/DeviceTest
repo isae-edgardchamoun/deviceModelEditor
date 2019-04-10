@@ -1,0 +1,85 @@
+require("m/framr/Framr").init(this, {classPath: "u/deviceModelEditor/"})
+
+import("devicemodels.Device")
+
+var model = {
+  location: new Location("48.8580,2.2951"),
+  id: "testDevice",
+  name: "Test Device"
+}
+
+var d = new Device({model: model})
+
+// native listener
+d.onTemperature = function(value) {
+  console.log("onTemperature received " + value);
+};
+
+// native listener
+d.onLight = function(value) {
+  console.log("onLight received " + value);
+};
+
+// add methods to d then register them as event listeners
+d.temperatureListener = function(value){
+  console.log("temperatureListener received " + value);
+};
+
+d.highTemperatureListener = function(value){
+  console.log("highTemperatureListener received " + value);
+};
+
+d.regularTemperatureListener = function(value){
+  console.log("regularTemperatureListener received " + value);
+};
+
+d.lightListener = function(value){
+  console.log("lightListener received " + value);
+};
+
+d.addEventListener("temperature", d.temperatureListener);
+d.addEventListener("temperature", d.highTemperatureListener, "value >= 60"); // this listener should not be invoked if temperature < 60
+d.addEventListener("temperature", d.regularTemperatureListener, "value <= 40");  // this listener should be invoked if temperature <= 40
+d.addEventListener("light", d.lightListener);
+
+console.log("--- Setting temperature to 40. Expected invoked listeners: d.onTemperature, d.temperatureListener and d.regularTemperatureListener");
+d.set("temperature", 40);
+
+console.log("--- Setting light to 60. Expected invoked listeners: onLight, lightListener");
+d.set("light", 80); // this should set the value of "light" to 80 and d.lightListener
+
+// try passing a map
+console.log("--- Setting temperature to 60 and light to 90. Expected invoked listeners: " +
+            "d.onTemperature, d.temperatureListener, d.highTemperatureListener, d.onLight, d.lightListener");
+d.set({"temperature":60, "light":90});
+
+// remove listener
+d.removeEventListener("temperature", d.regularTemperatureListener);
+console.log("--- Setting temperature to 40. Expected invoked listeners: d.onTemperature, d.temperatureListener");
+d.set("temperature", 40);
+
+d.save()
+d.delete()
+
+logger.log(d.serialize())
+
+logger.log((d.serialize().temperature == 40)?"works":"")
+
+// trying listeners with a subclass
+var Thermostat = Class(Device, {
+  constructor: function(model) {
+    Thermostat.$super.call(this, model)
+    this.set("cls", "model.Thermostat") 
+    this.set("heater", "on")
+  },
+  
+  onTemperature: function(value){
+    console.log("Thermostat.onTemperature received " + value);
+  }
+})
+
+var thermostat = new Thermostat({model:model});
+thermostat.set("temperature", 50);
+
+
+

@@ -1,0 +1,8 @@
+import("devicemodels.demoApp.model.Vehicle");
+
+var Car = Class(Vehicle, {
+  constructor: function(model) {
+    Car.$super.call(this, model);
+    this.set("cls", "model.Car");
+  }
+})

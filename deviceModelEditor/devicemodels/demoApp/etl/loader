@@ -1,0 +1,207 @@
+/**
+ * This script receives data from OBDs (Carvoyant) installed on vehicles. It transforms the data it receives into
+ * a more generic structure, only keeping common vehicle data (i.e. data shared by all OBDs) and creates/updates Devices
+ * from the data in scriptr.io using an Adapter - VersionableDeviceRepositoryAdaptor. The VersionableDeviceRepositoryAdaptor 
+ * keeps track of the different versions of the state of a car by creating documents on every update and keeping the latest
+ * state in the Device.
+ * If you do not have a Carvoyant stream, you can run the script and use the stub below to generate data.
+ */
+
+  
+var modelModule = require("u/deviceModelEditor/devicemodels/api/getModels");
+var config = require("u/deviceModelEditor/devicemodels/config");
+
+require("m/framr/Framr").init(this, {classPath: "u/deviceModelEditor/;"});
+import("devicemodels.demoApp.model.Car");
+import("agnes.VersionableDeviceRepositoryAdaptor");
+import("devicemodels.Location");
+
+const DEFAULT_UPDATE_CHANNEL = "responseChannel";
+
+/**
+ * Entry point
+ */
+try {
+  
+  var body = request.body;
+  var stub = {
+      "data": {
+        "datum": [
+          {
+            "translatedValue": "12.8103978361405V",
+            "description": "Battery Voltage",
+            "id": 5733088,
+            "value": "12.8103978361405",
+            "key": "GEN_VOLTAGE"
+          },
+          {
+            "translatedValue": "3.863029622650077 mph",
+            "description": "Maximum Speed Recorded (since the previous reading)",
+            "id": 5733087,
+            "value": "3.863029622650077",
+            "key": "GEN_SPEED"
+          },
+          {
+            "translatedValue": "214.0 deg F",
+            "description": "Engine Temperature",
+            "id": 5733086,
+            "value": "101.12715783542828",
+            "key": "GEN_ENGINE_COOLANT_TEMP"
+          },
+          {
+            "translatedValue": "1.787446024946866 gph",
+            "description": "Rate of Fuel Consumption",
+            "id": 5733085,
+            "value": "1.787446024946866",
+            "key": "GEN_FUELRATE"
+          },
+          {
+            "translatedValue": "34.64778402159856 %",
+            "description": "Percentage of Fuel Remaining",
+            "id": 5733084,
+            "value": "34.64778402159856",
+            "key": "GEN_FUELLEVEL"
+          },
+          {
+            "translatedValue": "1945.6495312476331",
+            "description": "Engine Speed",
+            "id": 5733083,
+            "value": "1945.6495312476331",
+            "key": "GEN_RPM"
+          },
+          {
+            "translatedValue": "40.87558000000001,-72.56722",
+            "description": "GPS Location",
+            "id": 5733082,
+            "value": "40.87558000000001,-72.56722",
+            "key": "GEN_WAYPOINT"
+          }
+        ],
+        "ignitionStatus": "RUNNING",
+        "id": 1834841,
+        "timestamp": "2017-02-06T14:21:42+00:00"
+      },
+      "vehicleInfo": {
+        "mil": false,
+        "lastWaypoint": {
+          "latitude": 40.70561,
+          "timestamp": "2016-09-09T18:10:44+0000",
+          "longitude": -73.52688
+        },
+        "year": "2008",
+        "lastRunningTimestamp": "2016-09-09T18:10:44+0000",
+        "name": "2008 Jeep Wrangler Unlimited X",
+        "vin": "1J8GB39138L601637",
+        "model": "Wrangler",
+        "label": "Vehicle 03",
+        "vehicleId": 253831,
+        "autoAssignDevice": true,
+        "make": "Jeep",
+        "mileage": 54849
+      }
+    };
+  body = body ? body : stub;
+  if (body) {
+
+    var vehicle = parseVehicleData(body);
+    var adaptor = new VersionableDeviceRepositoryAdaptor();
+    var location = new Location(vehicle.location);
+    vehicle.location = location; 
+    var vehicleObj =  new Car({
+      adaptor: adaptor,
+      model: vehicle
+    });
+	
+    if (adaptor.exists(vehicleObj.metadata.id)) {
+      
+      adaptor.update(vehicleObj);
+      publishUpdate(vehicle);
+    }else{
+      adaptor.create(vehicleObj);
+    }    
+  }
+}catch(exception) {
+  logger.log("Exception occurred while ingesting vehicle data " +  JSON.stringify(exception));
+}
+
+
+/**
+ * Publish updated values on channel, field by field
+ */
+function publishUpdate(device) {
+  
+  /**
+   * message = {id: deviceid.field, result: }
+   * gauge, speedo, odo: result = value
+   * charts (line, bar, ): result = [y, x, x]
+   */
+  
+  var channel = config && config.channel ? config.channel : DEFAULT_UPDATE_CHANNEL;
+  // var model = modelModule[device.cls];
+  for (var key in device) {
+    
+    // var widgetObj = model ? model.attributes[key] : null;
+    // var widgetType = widgetObj ? widgetObj.type : null;    
+    if (["cls", "id", "vin", "make", "model", "year"].indexOf(key) < 0) {
+      
+      var msg = {};
+      msg["id"] = ""+ device.id + "." + key;
+      msg["result"] = device[key]; 
+      publish(channel, JSON.stringify(msg));
+    }    
+  }  
+}
+
+/**
+ * turn data into generic vehicle data (flat structure and no specific entries)
+ */
+function parseVehicleData(body) {
+  
+  var bodyClone = JSON.parse(JSON.stringify(body));
+  var vehicle = {};
+  delete bodyClone.trip;
+  var data = bodyClone.data.datum;
+  for (var i = 0; data && i < data.length; i++) {
+    
+    var property = "";
+    if (data[i].description.indexOf("Battery Voltage") > -1) {
+      property = "batteryVoltage";
+    }
+    
+    if (data[i].description.indexOf("Engine Temperature") > -1) {
+      property = "engineTemperature";
+    }
+    
+    if (data[i].description.indexOf("Fuel Remaining") > -1) {
+      property = "fuelLevel";
+    }
+    
+    if (data[i].description.indexOf("Engine Speed") > -1) {
+      property = "engineSpeed";
+    }
+    
+    if (property) {
+      vehicle[property] = isNaN(data[i].value) ? data[i].value : Number(data[i].value);
+    }    
+  }
+
+  vehicle.ignitionStatus = bodyClone.data.ignitionStatus;
+  var vehicleInfo = bodyClone.vehicleInfo;
+  for (var key in vehicleInfo) {
+
+    vehicle[key] = vehicleInfo[key];
+    delete vehicle.mil;
+    var lat = "" + vehicleInfo.lastWaypoint.latitude; // tailor to scriptrio.io geolocation capacity
+    lat = lat.substring(0, lat.length - 1);
+    var long = "" + vehicleInfo.lastWaypoint.longitude
+    long = long.substring(0, long.length - 1); // tailor to scriptrio.io geolocation capacity
+    vehicle.location = lat + "," + long;
+    delete vehicle.lastWaypoint;
+  }
+
+  vehicle.id = vehicle.vin;
+  delete vehicle.vehicleId;
+  delete vehicle.lastRunningTimestamp;
+  delete vehicle.autoAssignDevice;
+  return vehicle;
+}

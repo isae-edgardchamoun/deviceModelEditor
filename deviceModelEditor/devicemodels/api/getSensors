@@ -1,0 +1,129 @@
+//check search criteria
+var params = {};
+
+if(request.body != null){
+	params = request.body;
+}else if(request.parameters.body){
+  params = request.parameters.body;
+}else {
+  params = request.parameters;
+}
+
+if(typeof params == 'string' && params != null){
+  try{
+    params = JSON.parse(params);   
+  }catch(e){
+    return "INVALID OR MISSING PARAMETER";
+  }
+}
+
+var criteria = params.criteria;
+
+//list all class models
+var modelDefinition = require("u/deviceModelEditor/devicemodels/api/getModels").models;
+
+var models = modelDefinition.models;
+var icons = modelDefinition.icons;
+var structure = {};
+var resultArray = [];
+
+var attributes = [];
+//searching by className 
+if(models[criteria]){
+    
+  	//this class exists, return it along with the attributes under it
+  	var result = models[criteria];
+ 	attributes = getAttributes(models, criteria);
+  	resultArray.push(buildClassStrucuture(criteria, attributes, icons.deviceModel));
+    var devices = getDeviceByClass(criteria);
+	//for each device, add the attributes
+  	for(var i = 0; i < devices.length; i++){
+      	resultArray.push(buildDeviceStructure(devices[i], criteria, attributes, icons.instanceModel));
+    }
+}else{//or by device id
+  	var device = getDeviceById(criteria);	
+  	if(device){
+  		attributes = getAttributes(models, device.cls);
+  		resultArray.push(buildClassStrucuture(device.cls, attributes, icons.deviceModel));
+    	//modify the attributes to have the correct type
+    	resultArray.push(buildDeviceStructure(device, device.cls, attributes, icons.instanceModel));      
+    }
+}
+
+return resultArray;
+
+function getDeviceByClass(className){
+  	return require("device").query({query: 'cls = "' + criteria + '"', fields: 'id, cls, make, model'}).result.devices;
+}
+
+function getDeviceById(id){
+  	var dev = require("device").query({query: 'id = "' + id + '"', fields:'id, cls, make, model'}).result.devices;
+  	if(dev.length == 1){
+      	return dev[0];
+    }else{
+      	return null;
+    }
+}
+
+function buildClassStrucuture(className, attributes, imgSrc){
+  	return {
+      	label: className,
+      	className: className,
+      	type: "model",
+        imgSrc: imgSrc,
+      	children: JSON.parse(JSON.stringify(attributes))//cheap clone
+    }
+}
+
+function buildDeviceStructure(device, className, attributes, imgSrc){
+    var deviceLabel = (device.make?device.make:"N/A") + " "+ (device.model?device.model:"N/A") + ": " + device.id;
+  	//clone in order to modify and return the object from getModels
+  	var clone = JSON.parse(JSON.stringify(attributes));
+  	//this is an ugly structure, use the [key] to figure out the name under which the attributes are
+    for(var i = 0; i < attributes.length; i++){
+        attributes[i].type = "instance-attribute";
+		var attribute = clone[i][clone[i]["key"]];
+      	//if(attribute["widget"] && attribute["widget"]["msg-tag"]){
+        attribute["widget"]["msg-tag"] = device.id + "." + clone[i]["key"];
+        //}
+       if(attribute["widget"] && attribute["widget"]["default-api-params"]){
+          attribute["widget"]["default-api-params"]["id"] = device.id;
+        } else {
+           attribute["widget"]["default-api-params"] = {"id": device.id}
+        }
+        if(attribute["widget"] && attribute["widget"]["api-params-name"]){
+        	attribute["widget"]["api-params-name"].splice( attribute["widget"]["api-params-name"].indexOf("id"), 1);
+        	attribute["widget"]["api-params-name"].splice( attribute["widget"]["api-params-name"].indexOf("field"), 1);
+        }
+      	attribute["widget"]["boxLabel"] = deviceLabel + " - " +  clone[i]["key"];
+    }
+  	
+  	return {
+          	id: device.id,
+      		label: deviceLabel,
+          	className: className,
+          	type: "instance",
+      		imgSrc: imgSrc,
+          	clickable: true,
+          	children: clone
+        }
+}
+
+function getAttributes(models, className){
+  	var attributes = [];
+  	if(models[className]){
+      	var atts = models[className].attributes;
+        for(var attribute in atts){
+          	var obj = {}
+            obj[attribute] = atts[attribute];
+          	obj.key = attribute;
+          	obj.type = "class-attribute";
+            obj.clickable = true;
+            obj.imgSrc = atts[attribute].imgSrc;
+          	obj.label = attribute;
+          	attributes.push(obj);
+        }
+        attributes = attributes.concat(getAttributes(models, models[className].ancestor));
+    }
+    return attributes;
+}

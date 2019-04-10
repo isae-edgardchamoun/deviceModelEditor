@@ -1,0 +1,59 @@
+/*
+ * A device factory knows how to load a device from the device repository and cast it into a Device class based on the model.cls attribute
+ */
+var DeviceFactory = Class({
+
+    constructor: function(options) {
+      this.adaptor = options.adaptor
+    },
+  
+    getInstance: function(params) {
+      if(!params){
+        return null;
+      }
+      var model
+      var deviceClass;
+      var device;
+      
+      try {
+        model = this.adaptor.load(params.id);
+        if(model)
+        	deviceClass = import(model.cls)
+      } catch(err) {
+        if(!params.autoCreate)
+        	return null
+      }
+      
+      // Load device class dynamically
+      if(!model && params.autoCreate){
+        if(!params.cls){
+          return null;
+        }
+        
+		deviceClass = import(params.cls);
+        model = {
+          "cls": params.cls,
+          "id": params.id,
+          "name":params.name ? params.name : params.id
+        }
+      }
+      
+      if(deviceClass){
+        // Instantiate a new device of deviceClass
+        device = new deviceClass({adaptor: this.adaptor, model: model})
+      }
+
+      return device
+    },
+  
+    load: function(id) {
+      return this.getInstance({ "id" : id});
+    },
+  
+    new: function(cls, options) {
+      if (!options) options = {}
+      if (!options.adaptor) options.adaptor = this.adaptor
+      var device = new cls(options)
+      return device
+    }
+})

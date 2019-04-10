@@ -1,0 +1,25 @@
+/*
+ *  httpAdaptor provides an HTTP endpoint to the devicemodels.Service class, marshalling request parameters and returning response 
+ *	it also injects a deviceRepositoryAdaptor that will provide the underlying repository services
+ */
+require("m/framr/Framr").init(this, {classPath: "u/deviceModelEditor/;u/deviceModelEditor/devicemodels/demoApp/", quiet: true})
+
+import("devicemodels.Service")
+import("agnes.DeviceRepositoryAdaptor")
+
+if (!request.parameters.id) logger.error("id missing in request parameters.")
+if (!request.parameters.method) logger.warn("method missing in request parameters.")
+
+// Remove unnecessary id & method from request object to pass to service
+var params = {}
+for (var k in request.parameters) params[k] = request.parameters[k]
+delete params.id
+delete params.method
+
+// Instantiate Service with a repository adaptor
+var service = new Service(new agnes.DeviceRepositoryAdaptor())
+
+// This pulls device model by -id- from device repository and executes -method- passing to it -params-
+var device = service.execute(request.parameters.id, request.parameters.method, params)
+
+return device?device.serialize():null

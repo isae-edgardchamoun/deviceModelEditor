@@ -1,0 +1,49 @@
+import("devicemodels.DeviceFactory")
+
+/*	
+ * 	A Service class is typically used by a protocol adaptor (http, ws, mqtt) to interact with Device models
+ * 	The Service fetches a device model from the device repository based on @id and executes a @method passing @params		
+ */
+
+var Service = Class({
+  constructor: function(adaptor, config) {
+    this.adaptor = adaptor
+    this.factory = new devicemodels.DeviceFactory({adaptor: adaptor});
+  	this.config = config ? config : require('u/deviceModelEditor/devicemodels/config').getConfig();
+  },
+  
+  execute: function(deviceParams, method, params) {
+	// fetch deviceModel by DeviceID from device Database, load will pick ID from request.
+  	// This is important to retrieve the device classname and instantiate the proper device class for the model 
+    var device;
+    try {
+      if(typeof(deviceParams) == "string"){
+         var id = deviceParams;
+         deviceParams = { 
+           "id" : id
+         }
+      }
+       
+      deviceParams['autoCreate'] = this.config.autoCreate;
+      
+      device = this.factory.getInstance(deviceParams)  
+      // device = this.factory.load(id)  
+
+      // If device model exists
+      if (device) {
+        // invoke desired method
+        device[method](params)
+		// until further requirements we consider that we need to save the device after every method execution.
+        if(method == "set")
+       		return device.save();
+        
+        return device
+      }
+    } catch(e) {
+      logger.error("Service - ", e)
+    }
+    
+    return null
+  }
+})
+
