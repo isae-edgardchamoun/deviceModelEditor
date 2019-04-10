@@ -1,5 +1,5 @@
 var file =  require("file");
-require("m/framr/Framr").init(this, {classPath: "./demoApp/;"})
+require("m/framr/Framr").init(this, {classPath: "u/deviceModelEditor/;./demoApp/;"})
 
 function getClassNameFromPath(path){
     return path.split('.').pop();
