@@ -1,5 +1,5 @@
 var file =  require("file");
 require("m/framr/Framr").init(this, {classPath: "./m/;"});
 
-var get = require("./loadClassProperties");
+var get = require("u/deviceModelEditor/loadClassProperties");
 return get.get(request.parameters.className)
