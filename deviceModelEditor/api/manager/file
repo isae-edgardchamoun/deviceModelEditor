@@ -1,6 +1,7 @@
 var hogan = require("u/deviceModelEditor/mustache/mustache.js").Mustache;
 var file =  require("file");
-var templateString = file.get("u/deviceModelEditor/MoustacheTemplate").result.content;
+var result =  apsdb.callApi("GetFileContent",{"apsdb.name" : "MoustacheTemplate"},null);
+var templateString = result.result.content;
 var scriptContentType =  "application/vnd.scriptr-javascript";
 function getClassNameFromPath(path){
     return path.split('.').pop();
