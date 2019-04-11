@@ -1,6 +1,6 @@
-import("{{ AncestorClass }}");
+{{#AncestorClass}} import("{{ AncestorClass }}"); {{/AncestorClass}}
 
-var {{ClassName}} = Class({{ AncestorClass }},{
+var {{ClassName}} = Class({{#AncestorClass}} {{ AncestorClass }}, {{/AncestorClass}}{
   constructor: function(options) {
     {{ClassName}}.$super.call(this, options);
     this.set("cls", "{{ ClassPath }}");
