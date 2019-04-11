@@ -27,6 +27,6 @@ if (car==null) {
   adaptor.save(car)
 }
 
-logger.log("works")
+//logger.log("works")
 
 return car.serialize()

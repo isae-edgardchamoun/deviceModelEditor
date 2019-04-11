@@ -61,9 +61,9 @@ d.set("temperature", 40);
 d.save()
 d.delete()
 
-logger.log(d.serialize())
+//logger.log(d.serialize())
 
-logger.log((d.serialize().temperature == 40)?"works":"")
+//logger.log((d.serialize().temperature == 40)?"works":"")
 
 // trying listeners with a subclass
 var Thermostat = Class(Device, {

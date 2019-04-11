@@ -40,7 +40,7 @@ var Service = Class({
         return device
       }
     } catch(e) {
-      logger.error("Service - ", e)
+      //logger.error("Service - ", e)
     }
     
     return null

@@ -52,7 +52,7 @@ var Device = Class({
       if (key!="enabled" && key!="online") {
         this.metadata[key] = value;       
       } else {
-        logger.warn("Device - device metadata attribute ["+key+"] is reserved.");
+        //logger.warn("Device - device metadata attribute ["+key+"] is reserved.");
       }
       this._invokeListeners(key, value);
     } else if (typeof key == "object") {
@@ -61,7 +61,7 @@ var Device = Class({
         if (k!="enabled" && k!="online") {
           this.metadata[k]=key[k];         
         }else {
-          logger.warn("Device - device metadata attribute ["+key+"] is reserved.")
+          //logger.warn("Device - device metadata attribute ["+key+"] is reserved.")
         }
         
         this._invokeListeners(k, key[k]);
@@ -79,12 +79,12 @@ var Device = Class({
 
   save: function() {
     if (this.adaptor) return this.adaptor.save(this); 
-    else logger.warn("Device.save - ["+this.metadata.id+"] hasn't been instantiated with a DeviceRepositoryAdaptor")
+    //else logger.warn("Device.save - ["+this.metadata.id+"] hasn't been instantiated with a DeviceRepositoryAdaptor")
   },
   
   delete: function() {
     if (this.adaptor) return this.adaptor.delete(this)
-    else logger.warn("Device.delete - ["+this.metadata.id+"] hasn't been instantiated with a DeviceRepositoryAdaptor")
+    //else logger.warn("Device.delete - ["+this.metadata.id+"] hasn't been instantiated with a DeviceRepositoryAdaptor")
   },
   
   /**
@@ -111,7 +111,7 @@ var Device = Class({
    */
   addEventListener: function(eventType, listener, expression) {
   	if (!eventType || !listener) {
-  		logger.error("Device - cannot invoke addEventListener with null/empty eventType or listener parameters");
+  		//logger.error("Device - cannot invoke addEventListener with null/empty eventType or listener parameters");
     } 
   	if (!this.eventListeners[eventType]) {
       this.eventListeners[eventType] = [];
@@ -178,7 +178,7 @@ var Device = Class({
       try {
         ruleVerified = eval(expression);
       }catch(exception){
-        logger.error("Device - _invokeListenr could not evaluate expression. Listener won't be called." + expr +  " Reported error " + JSON.stringify(exception));
+        //logger.error("Device - _invokeListenr could not evaluate expression. Listener won't be called." + expr +  " Reported error " + JSON.stringify(exception));
       }
       if (ruleVerified){
       	listener(value);

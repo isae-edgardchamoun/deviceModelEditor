@@ -21,10 +21,10 @@ device.save()
 
 device = deviceFactory.load("vwBeatle")
 
-logger.log("device loaded", device.serialize())
+//logger.log("device loaded", device.serialize())
 
 device.delete()
 
-logger.log("works")
+//logger.log("works")
 
 

@@ -121,7 +121,7 @@ try {
     }    
   }
 }catch(exception) {
-  logger.log("Exception occurred while ingesting vehicle data " +  JSON.stringify(exception));
+  //logger.log("Exception occurred while ingesting vehicle data " +  JSON.stringify(exception));
 }
 
 
