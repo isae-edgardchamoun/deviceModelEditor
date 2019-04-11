@@ -1,11 +1,11 @@
-{{#AncestorClass}} import("{{ AncestorClass }}"); {{/AncestorClass}}
+{{#if AncestorClass}} import("{{ AncestorClass }}"); {{/if}}
 
-var {{ClassName}} = Class({{#AncestorClass}} {{ AncestorClass }}, {{/AncestorClass}}{
+var {{ClassName}} = Class({{#if AncestorClass}} {{ AncestorClass }}, {{/if}}{
   constructor: function(options) {
     {{ClassName}}.$super.call(this, options);
     this.set("cls", "{{ ClassPath }}");
   },
-  super: "{{ AncestorClass }}",
+  {{#if AncestorClass}} super: "{{ AncestorClass }}",  {{/if}}
   icon: "{{icon}}",
   description : "{{description}}",
   {{#attributes}} 
