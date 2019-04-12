@@ -1,7 +1,8 @@
 var hogan = require("u/deviceModelEditor/mustache/mustache.js").Mustache;
 var file =  require("file");
-var result =  apsdb.callApi("GetFileContent",{"apsdb.name" : "MoustacheTemplate"},null);
-var templateString = result.result.content;
+var result = require("u/deviceModelEditor/MoustacheTemplateContent");
+//var result =  apsdb.callApi("GetFileContent",{"apsdb.name" : "MoustacheTemplate"},null);
+var templateString = result.getContent();//.result.content;
 var scriptContentType =  "application/vnd.scriptr-javascript";
 function getClassNameFromPath(path){
     return path.split('.').pop();
@@ -36,7 +37,7 @@ function getFilePath(classPath, output){
 }
 
 function create(params){
-    var ancestorClass = params.ancestorClass
+    var ancestorClass = params.ancestorClass;
     var classPath = params.classPath;
     var className = getClassNameFromPath(classPath);
     var methods = params.methods ? JSON.parse(params.methods) : [];
@@ -76,6 +77,19 @@ function create(params){
     }
 
     var resp = apsdb.callApi("SaveFile", params, null);
-
+    //Checking if result was success on update
+    if(resp.metadata.errorCode == "FILE_NOT_FOUND"){
+        //Recalling save manifest.json file if file was not found (creating the file for the first time)
+        var params = {
+            "apsdb.name": scriptName,
+            "apsdb.content": JSON.stringify({ 
+                "content" : script,
+                "contentType": scriptContentType
+            })
+        }
+    	return apsdb.callApi("SaveFile", params, null);
+    }else{
+        return resp;
+    }
     return resp;
-}
+}    
