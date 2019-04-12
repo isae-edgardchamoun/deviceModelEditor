@@ -1,6 +1,8 @@
 var file =  require("file");
-require("m/framr/Framr").init(this, {classPath: "u/deviceModelEditor/;./demoApp/;"});
+var frmr = require("m/framr/Framr").init(this, {classPath: "./demoApp/;u/deviceModelEditor/;"});
 
 var get = require("u/deviceModelEditor/api/loadClassProperties");
 //return get.get("devicemodels.Device");
-return get.get(request.parameters.className)
+return get.get(request.parameters.className)     
+
+
