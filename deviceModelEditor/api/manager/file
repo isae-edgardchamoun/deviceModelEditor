@@ -1,6 +1,6 @@
 var hogan = require("u/deviceModelEditor/mustache/mustache.js").Mustache;
 var file =  require("file");
-var result = require("u/deviceModelEditor/MoustacheTemplateContent");
+var result = require("u/deviceModelEditor/MoustacheTemplate");
 //var result =  apsdb.callApi("GetFileContent",{"apsdb.name" : "MoustacheTemplate"},null);
 var templateString = result.getContent();//.result.content;
 var scriptContentType =  "application/vnd.scriptr-javascript";

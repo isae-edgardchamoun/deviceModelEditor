@@ -1,16 +1,18 @@
-{{#AncestorClass}} import("{{ AncestorClass }}"); {{/AncestorClass}}
-
-var {{ClassName}} = Class({{#AncestorClass}} {{ AncestorClass }}, {{/AncestorClass}}{
-  constructor: function(options) {
-    {{ClassName}}.$super.call(this, options);
-    this.set("cls", "{{ ClassPath }}");
-  },
-  {{#AncestorClass}} super: "{{ AncestorClass }}",  {{/AncestorClass}}
-  icon: "{{icon}}",
-  description : "{{description}}",
-  {{#attributes}} 
-    "{{key}}.definition" : { "defaultValue": {{#isString}} "{{value}}" {{/isString}} {{^isString}} {{{value}}} {{/isString}}, "type" : "{{type}}", "visualization": {{{visualization}}} },
-    "{{key}}" :  {{#isString}} "{{value}}" {{/isString}} {{^isString}} {{{value}}} {{/isString}},
-  {{/attributes}}
-   {{#methods}} {{name}} : {{method}}, {{/methods}}
-})
+function getContent(){
+    var x = '{{#AncestorClass}} import("{{ AncestorClass }}"); {{/AncestorClass}} \n' +
+    'var {{ClassName}} = Class({{#AncestorClass}} {{ AncestorClass }}, {{/AncestorClass}}{ \n' +
+    'constructor: function(options) { \n' +
+    '{{#AncestorClass}} {{ClassName}}.$super.call(this, options); {{/AncestorClass}} \n'+
+    'this.set("cls", "{{ ClassPath }}"); \n'+
+    '}, \n'+
+    '{{#AncestorClass}} super: "{{ AncestorClass }}",  {{/AncestorClass}} \n'+
+    'icon: "{{icon}}", \n'+
+    'description : "{{description}}", \n'+
+    '{{#attributes}} \n'+
+    '"{{key}}.definition" : { "defaultValue": {{#isString}} "{{value}}" {{/isString}} {{^isString}} {{{value}}} {{/isString}}, "type" : "{{type}}", "visualization": {{{visualization}}} }, \n'+
+    '"{{key}}" :  {{#isString}} "{{value}}" {{/isString}} {{^isString}} {{{value}}} {{/isString}}, \n'+
+    '{{/attributes}} \n'+
+    '{{#methods}} {{name}} : {{method}}, {{/methods}} \n'+
+    '})';
+    return x;
+}
