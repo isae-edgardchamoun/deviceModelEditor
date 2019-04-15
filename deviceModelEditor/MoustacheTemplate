@@ -12,7 +12,7 @@ function getContent(){
     '"{{key}}.definition" : { "defaultValue": {{#isString}} "{{value}}" {{/isString}} {{^isString}} {{{value}}} {{/isString}}, "type" : "{{type}}", "visualization": {{{visualization}}} }, \n'+
     '"{{key}}" :  {{#isString}} "{{value}}" {{/isString}} {{^isString}} {{{value}}} {{/isString}}, \n'+
     '{{/attributes}} \n'+
-    '{{#methods}} {{name}} : {{method}}, {{/methods}} \n'+
+    '{{#methods}} {{name}} : {{{method}}}, {{/methods}} \n'+
     '})';
     return x;
 }
